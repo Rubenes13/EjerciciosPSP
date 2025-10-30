@@ -14,7 +14,6 @@ int main() {
     {
     case -1 : //Error
         printf("Error al crear el proceso hijo\n");
-        exit(-1);
         break;
     case 0 : //Proceso hijo
         printf("El hijo escribe en la pipe\n");
