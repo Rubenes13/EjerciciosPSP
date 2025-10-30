@@ -31,5 +31,6 @@ int main() {
             salida=1;
             break;
     }
+    printf("Fin del programa");
     return salida;
 }
