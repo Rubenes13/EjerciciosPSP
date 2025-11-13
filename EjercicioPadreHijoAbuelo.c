@@ -4,7 +4,6 @@
 #include <string.h>
 #include <sys/wait.h>
 
-// ABUELO → HIJO → NIETO → HIJO → ABUELO (solo 2 pipes)
 int main() {
     pid_t pid, pid2;
     int fd1[2], fd2[2];
