@@ -26,9 +26,9 @@ int main()
         while (bytesLeidos!=0)
         {
             printf("%s", buffer);
-            bytesLeidos=fread(fp, buffer, sizeof(buffer));
+            bytesLeidos=read(fp, buffer, sizeof(buffer));
         }
-        pclose(fp);
+        close(fp);
     }
 
 

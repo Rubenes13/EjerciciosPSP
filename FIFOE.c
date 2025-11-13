@@ -22,8 +22,8 @@ int main()
     if (salida == 0)
     {
         printf("Mandando informacion al FIFO...\n");
-        fclose(fp, saludo, strlen(saludo));
-        pclose(fp);
+        write(fp, saludo, strlen(saludo));
+        close(fp);
     }
 
     return salida  ;
