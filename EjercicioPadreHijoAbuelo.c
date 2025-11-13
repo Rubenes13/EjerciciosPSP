@@ -16,8 +16,8 @@ int main() {
     char saludoNieto[]  = "Saludos del Nieto..";
     char buffer[80] = "";
 
-    pipe(fd1); // Pipe abuelo ↔ hijo
-    pipe(fd2); // Pipe hijo ↔ nieto
+    pipe(fd1); // Pipe abuelo <-> hijo
+    pipe(fd2); // Pipe hijo <-> nieto
 
     pid = fork(); // Crea al hijo
 
