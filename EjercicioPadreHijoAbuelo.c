@@ -4,120 +4,103 @@
 #include <string.h>
 #include <sys/wait.h>
 
-// ABUELO - HIJO - NIETO
 int main() {
-    pid_t pid, pid2;
-    int fd1[2], fd2[2];
-    int salida;
-    char quienSoy[15];
+    int fd1[2]; // ABUELO → HIJO
+    int fd2[2]; // HIJO → NIETO
+    int fd3[2]; // NIETO → HIJO
+    int fd4[2]; // HIJO → ABUELO
 
-    char saludoAbuelo[] = "Saludos del abuelo";
-    char saludoPadre[]  = "Saludos del padre";
-    char saludoHijo[]   = "Saludos del hijo";
-    char saludoNieto[]  = "Saludos del nieto";
+    char msjabuelo[] = "Saludos del Abuelo.";
+    char msjpadre[]  = "Saludos del Padre..";
+    char msjhijo[]   = "Saludos del Hijo...";
+    char msjnieto[]  = "Saludos del Nieto..";
 
-    char buffer[80] = "";
+    char buffer[80];
+    pid_t pid_hijo, pid_nieto;
 
-    pipe(fd1); // pipe para comunicacion de abuelo <-> hijo
-    pipe(fd2); // pipe para comunicacion de hijo <-> nieto
+    pipe(fd1);
+    pipe(fd2);
+    pipe(fd3);
+    pipe(fd4);
 
-    pid = fork(); // Soy el Abuelo, creo al hijo
+    pid_hijo = fork();
 
-    if (pid == -1) {
-        perror("Error en fork");
+    if (pid_hijo == -1) {
+        perror("Error al crear hijo");
         exit(EXIT_FAILURE);
     }
 
-    if (pid == 0) {
-        // ==== HIJO ====
-        pid2 = fork(); // Soy el Hijo, creo al nieto
+    if (pid_hijo == 0) {
+        // ======== HIJO ========
+        pid_nieto = fork();
 
-        if (pid2 == -1) {
-            perror("Error en fork");
+        if (pid_nieto == -1) {
+            perror("Error al crear nieto");
             exit(EXIT_FAILURE);
         }
 
-        if (pid2 == 0) {
-            // ==== NIETO ====
-            strcpy(quienSoy, "Nieto");
+        if (pid_nieto == 0) {
+            // ======== NIETO ========
+            close(fd1[0]); close(fd1[1]);
+            close(fd2[1]); // lee de su padre
+            close(fd3[0]); // escribe a su padre
+            close(fd4[0]); close(fd4[1]);
 
-            // El nieto recibe del padre (fd2[0]) y envía al padre (fd2[1])
-            close(fd1[0]);
-            close(fd1[1]); // No usa el pipe abuelo-hijo
-
-            printf("Nieto: leo del padre\n");
             read(fd2[0], buffer, sizeof(buffer));
-            printf("Nieto: mensaje leido: %s\n", buffer);
-
-            printf("Nieto: escribo al padre\n");
-            write(fd2[1], saludoNieto, sizeof(saludoNieto));
+            printf("\t\tNIETO RECIBE mensaje de su padre: %s\n", buffer);
+            printf("\t\tNIETO ENVIA MENSAJE a su padre...\n");
+            write(fd3[1], msjnieto, sizeof(msjnieto));
 
             close(fd2[0]);
-            close(fd2[1]);
-            salida = 0;
-        } else {
-            // ==== HIJO ====
-            strcpy(quienSoy, "Hijo");
-
-            // El hijo recibe del abuelo (fd1[0]), envía al nieto (fd2[1]),
-            // luego recibe del nieto (fd2[0]) y envía al abuelo (fd1[1])
-
-            close(fd1[1]); // Cierro escritura de abuelo->hijo (solo leo primero)
-            close(fd2[0]); // Cierro lectura de hijo->nieto (solo escribo primero)
-
-            printf("Hijo: leo del abuelo\n");
-            read(fd1[0], buffer, sizeof(buffer));
-            printf("Hijo: mensaje leido: %s\n", buffer);
-
-            printf("Hijo: escribo al nieto\n");
-            write(fd2[1], saludoPadre, sizeof(saludoPadre));
-
-            // Ahora el hijo recibe del nieto y escribe al abuelo
-            close(fd1[0]); // Ya leí del abuelo
-            close(fd2[1]); // Ya escribí al nieto
-
-            printf("Hijo: leo del nieto\n");
-            read(fd2[0], buffer, sizeof(buffer));
-            printf("Hijo: mensaje leido: %s\n", buffer);
-
-            // Reabrir escritura hacia el abuelo
-            int fd3[2];
-            pipe(fd3);
-            close(fd3[0]);
-            printf("Hijo: escribo al abuelo\n");
-            write(fd3[1], saludoHijo, sizeof(saludoHijo));
             close(fd3[1]);
+            exit(0);
+        } else {
+            // ======== HIJO ========
+            close(fd1[1]); // lee del abuelo
+            close(fd2[0]); // escribe al nieto
+            close(fd3[1]); // lee del nieto
+            close(fd4[0]); // escribe al abuelo
 
+            read(fd1[0], buffer, sizeof(buffer));
+            printf("\tHIJO recibe mensaje de ABUELO: %s\n", buffer);
+
+            printf("\t\tNIETO RECIBE mensaje de su padre: %s\n", buffer); // para mantener formato de sangría
+            printf("\t\tNIETO ENVIA MENSAJE a su padre...\n");
+
+            printf("\t\tNIETO RECIBE mensaje de su padre: %s\n", msjpadre);
+            write(fd2[1], msjpadre, sizeof(msjpadre));
+
+            read(fd3[0], buffer, sizeof(buffer));
+            printf("\tHIJO RECIBE mensaje de su hijo: %s\n", buffer);
+
+            printf("\tHIJO ENVIA MENSAJE a su padre...\n");
+            write(fd4[1], msjhijo, sizeof(msjhijo));
+
+            close(fd1[0]);
+            close(fd2[1]);
+            close(fd3[0]);
+            close(fd4[1]);
             wait(NULL);
-            salida = 0;
+            exit(0);
         }
+
     } else {
-        // ==== ABUELO ====
-        strcpy(quienSoy, "Abuelo");
+        // ======== ABUELO ========
+        close(fd1[0]); // escribe al hijo
+        close(fd2[0]); close(fd2[1]);
+        close(fd3[0]); close(fd3[1]);
+        close(fd4[1]); // lee del hijo
 
-        // El abuelo envía al hijo (fd1[1]) y recibe del hijo (fd1[0])
-        close(fd1[0]); // Cierro lectura del pipe abuelo-hijo para escribir
-        close(fd2[0]);
-        close(fd2[1]); // No usa el pipe del nieto directamente
+        printf("ABUELO ENVIA MENSAJE AL HIJO...\n");
+        write(fd1[1], msjabuelo, sizeof(msjabuelo));
 
-        printf("Abuelo: escribo al hijo\n");
-        write(fd1[1], saludoAbuelo, sizeof(saludoAbuelo));
+        read(fd4[0], buffer, sizeof(buffer));
+        printf("EL ABUELO RECIBE MENSAJE del HIJO: %s\n", buffer);
 
-        close(fd1[1]); // Ya escribió
-
-        // Simulamos que el hijo responde por el mismo canal
-        pipe(fd1);
         close(fd1[1]);
-        printf("Abuelo: leo del hijo\n");
-        read(fd1[0], buffer, sizeof(buffer));
-        printf("Abuelo: mensaje leido: %s\n", buffer);
-        close(fd1[0]);
-
+        close(fd4[0]);
         wait(NULL);
-        salida = 0;
     }
 
-    printf("Fin del %s\n", quienSoy);
-    exit(salida);
+    return 0;
 }
-
