@@ -5,6 +5,7 @@
 #include <sys/wait.h>
 
 int main() {
+    int salida = 0;
     int fd1[2]; // ABUELO → HIJO
     int fd2[2]; // HIJO → NIETO
     int fd3[2]; // NIETO → HIJO
@@ -27,7 +28,7 @@ int main() {
 
     if (pid_hijo == -1) {
         perror("Error al crear hijo");
-        exit(EXIT_FAILURE);
+        salida = -1;
     }
 
     if (pid_hijo == 0) {
@@ -36,7 +37,7 @@ int main() {
 
         if (pid_nieto == -1) {
             perror("Error al crear nieto");
-            exit(EXIT_FAILURE);
+            salida = -1;
         }
 
         if (pid_nieto == 0) {
@@ -53,7 +54,6 @@ int main() {
 
             close(fd2[0]);
             close(fd3[1]);
-            exit(0);
         } else {
             // ======== HIJO ========
             close(fd1[1]); // lee del abuelo
@@ -81,7 +81,7 @@ int main() {
             close(fd3[0]);
             close(fd4[1]);
             wait(NULL);
-            exit(0);
+    
         }
 
     } else {
