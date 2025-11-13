@@ -91,7 +91,7 @@ int main() {
         write(fd1[1], msjabuelo, sizeof(msjabuelo));
         close(fd1[1]);
 
-        wait(NULL); // ✅ Espera a que terminen hijo y nieto antes de leer
+        wait(NULL); // espera al hijo
 
         pipe(fd1);
         close(fd1[1]);
@@ -100,5 +100,5 @@ int main() {
         close(fd1[0]);
     }
 
-    return 0;
+    return salida;
 }
