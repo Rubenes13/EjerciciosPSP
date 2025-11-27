@@ -6,15 +6,15 @@
 #include <sys/wait.h>
 
 // Manejador para la señal SIGUSR1
-void handle_sigusr1(int sig) {
+void manejar_sigusr1(int sig) {
     printf("Proceso padre (PID: %d) recibió SIGUSR1.\n", getpid());
 }
 
 int main() {
     pid_t pid_hijo;
-
+    int salida = 0;
     // Configurar el manejador para SIGUSR1 en el padre
-    signal(SIGUSR1, handle_sigusr1);
+    signal(SIGUSR1, manejar_sigusr1);
 
     printf("Proceso padre iniciado (PID: %d).\n", getpid());
 
@@ -22,7 +22,7 @@ int main() {
 
     if (pid_hijo < 0) {
         perror("Error al crear el proceso hijo");
-        exit(EXIT_FAILURE);
+    salida = -1;
     } else if (pid_hijo == 0) {
         // Código del proceso hijo
         printf("Proceso hijo iniciado (PID: %d, Padre PID: %d).\n", getpid(), getppid());
@@ -39,19 +39,15 @@ int main() {
         kill(getppid(), SIGKILL);
 
         printf("Hijo (PID: %d) terminando.\n", getpid());
-        exit(EXIT_SUCCESS);
     } else {
         // Código del proceso padre
         printf("Padre (PID: %d) esperando las señales del hijo (PID: %d).\n", getpid(), pid_hijo);
 
-        // El padre esperará indefinidamente o hasta que termine.
-        // wait(NULL) no es adecuado aquí si el hijo mata al padre.
-        // Podemos usar un bucle infinito o simplemente esperar el fin.
         while(1) {
             // Mantener al padre vivo para recibir señales
             sleep(1);
         }
     }
 
-    return 0;
+    return salida;
 }
